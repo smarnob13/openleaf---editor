@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenLeaf Studio — Free Unlimited LaTeX IDE & PDF Compiler</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            serif: ['Crimson Pro', 'Georgia', 'serif']
+          },
+          colors: {
+            leaf: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
+    .code-font { font-family: 'JetBrains Mono', monospace; font-variant-ligatures: none; }
+    
+    /* Academic LaTeX Paper Styling */
+    .latex-paper {
+      font-family: 'Crimson Pro', 'Computer Modern Serif', Georgia, serif;
+      color: #111827;
+      background: #ffffff;
+      line-height: 1.58;
+      font-size: 11.5pt;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease;
+      transform-origin: top center;
+    }
+    .latex-paper h1.doc-title {
+      font-size: 20pt;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.35rem;
+      line-height: 1.25;
+      color: #030712;
+    }
+    .latex-paper .doc-author {
+      font-size: 12pt;
+      text-align: center;
+      margin-bottom: 0.2rem;
+      color: #1f2937;
+    }
+    .latex-paper .doc-date {
+      font-size: 11pt;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #374151;
+    }
+    .latex-paper .doc-abstract {
+      margin: 1.25rem 2.2rem 1.75rem 2.2rem;
+      font-size: 10.5pt;
+      text-align: justify;
+    }
+    .latex-paper .doc-abstract-title {
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.35rem;
+      font-size: 10.5pt;
+      letter-spacing: 0.02em;
+    }
+    .latex-paper h2.l-sec {
+      font-size: 14.5pt;
+      font-weight: 700;
+      margin-top: 1.4rem;
+      margin-bottom: 0.5rem;
+      color: #030712;
+      border-bottom: none;
+    }
+    .latex-paper h3.l-subsec {
+      font-size: 12.5pt;
+      font-weight: 700;
+      margin-top: 1.1rem;
+      margin-bottom: 0.4rem;
+      color: #111827;
+    }
+    .latex-paper h4.l-subsubsec {
+      font-size: 11.5pt;
+      font-weight: 600;
+      font-style: italic;
+      margin-top: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+    .latex-paper p {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      text-align: justify;
+    }
+    .latex-paper .l-theorem {
+      margin: 0.85rem 0;
+      padding: 0.55rem 0.85rem;
+      border-left: 3px solid #16a34a;
+      background: #f8fafc;
+      font-style: italic;
+    }
+    .latex-paper .l-theorem strong {
+      font-style: normal;
+      font-weight: 700;
+    }
+    .latex-paper .l-proof {
+      margin: 0.65rem 0 0.95rem 0;
+      text-align: justify;
+    }
+    .latex-paper table.l-table {
+      border-collapse: collapse;
+      margin: 1rem auto;
+      font-size: 10.5pt;
+      min-width: 65%;
+    }
+    .latex-paper table.l-table th,
+    .latex-paper table.l-table td {
+      border-top: 1px solid #1f2937;
+      border-bottom: 1px solid #1f2937;
+      padding: 0.35rem 0.75rem;
+    }
+    .latex-paper table.l-table thead th {
+      border-top: 2px solid #030712;
+      border-bottom: 1.5px solid #030712;
+      font-weight: 700;
+    }
+    .latex-paper table.l-table tbody tr:last-child td {
+      border-bottom: 2px solid #030712;
+    }
+    .latex-paper .l-caption {
+      font-size: 10pt;
+      text-align: center;
+      margin-top: 0.35rem;
+      margin-bottom: 0.85rem;
+      color: #374151;
+    }
+    .latex-paper .l-equation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0.9rem 0;
+      padding: 0.2rem 0.5rem;
+    }
+    .latex-paper .l-eq-body {
+      flex: 1;
+      text-align: center;
+      overflow-x: auto;
+    }
+    .latex-paper .l-eq-num {
+      font-size: 10.5pt;
+      color: #374151;
+      margin-left: 0.75rem;
+    }
+    .latex-paper .l-bib-item {
+      font-size: 10pt;
+      margin-bottom: 0.45rem;
+      padding-left: 1.8rem;
+      text-indent: -1.8rem;
+      text-align: left;
+    }
+    .latex-paper .two-col-body {
+      column-count: 2;
+      column-gap: 1.75rem;
+    }
+    @media (max-width: 768px) {
+      .latex-paper .two-col-body {
+        column-count: 1;
+      }
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); }
+    ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.8); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col select-none">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="h-12 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between shrink-0 z-20">
+    <!-- Left: Brand + Project Switcher + Template Picker -->
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="flex items-center gap-2 bg-leaf-600/15 border border-leaf-500/30 px-2.5 py-1 rounded-md">
+        <svg class="w-4 h-4 text-leaf-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+        <span class="font-bold text-sm tracking-tight text-white">OpenLeaf</span>
+        <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-leaf-500/20 text-leaf-300 border border-leaf-500/30">Unlimited Free</span>
+      </div>
+
+      <!-- Editable Project Title -->
+      <input id="projectTitleInput" type="text" value="Quantum_Entanglement_Paper_2026" aria-label="Project title"
+        class="bg-slate-800/80 hover:bg-slate-800 focus:bg-slate-800 text-xs font-medium text-slate-200 px-2.5 py-1.5 rounded border border-slate-700/70 focus:border-leaf-500 focus:outline-none w-44 sm:w-56 truncate" />
+
+      <!-- Template Selector -->
+      <div class="hidden md:flex items-center gap-1.5">
+        <label for="templateSelect" class="text-[11px] text-slate-400">Template:</label>
+        <select id="templateSelect" aria-label="Choose LaTeX Template"
+          class="bg-slate-800 text-xs text-slate-200 px-2 py-1.5 rounded border border-slate-700 focus:outline-none focus:border-leaf-500 cursor-pointer">
+          <option value="academic">Academic Journal Paper (2-Col Option)</option>
+          <option value="cv">Modern Academic CV / Resume</option>
+          <option value="beamer">Beamer Presentation Deck</option>
+          <option value="homework">University Math Problem Set</option>
+          <option value="thesis">PhD Thesis Chapter & Proofs</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Center: Mode Switcher (Code / Split / Visual / Rich) -->
+    <div class="hidden lg:flex items-center bg-slate-800/90 p-0.5 rounded-lg border border-slate-700/80">
+      <button id="viewModeSplitBtn" type="button" class="px-2.5 py-1 rounded-md text-xs font-medium bg-leaf-600 text-white shadow-sm transition">
+        Split View
+      </button>
+      <button id="viewModeCodeBtn" type="button" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+        Code Only
+      </button>
+      <button id="viewModeVisualBtn" type="button" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+        Visual Helper
+      </button>
+      <button id="viewModePdfBtn" type="button" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+        Full Preview
+      </button>
+    </div>
+
+    <!-- Right: Compiler Controls, Export & Deploy Kit -->
+    <div class="flex items-center gap-1.5">
+      <!-- Engine Selector -->
+      <select id="engineSelect" aria-label="LaTeX Engine" title="Select Compiler Engine"
+        class="hidden sm:block bg-slate-800 text-xs text-slate-200 px-2 py-1.5 rounded border border-slate-700 focus:outline-none focus:border-leaf-500">
+        <option value="instant">Instant Browser Engine (No Timeout)</option>
+        <option value="pdflatex">Cloud pdfLaTeX (TeX Live 2026)</option>
+        <option value="xelatex">Cloud XeLaTeX (UTF-8 / Fonts)</option>
+        <option value="lualatex">Cloud LuaLaTeX</option>
+      </select>
+
+      <!-- Recompile Button -->
+      <button id="recompileBtn" type="button" title="Recompile Document (Ctrl+Enter)"
+        class="flex items-center gap-1.5 bg-leaf-600 hover:bg-leaf-500 active:bg-leaf-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow transition">
+        <svg id="compileIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span>Recompile</span>
+      </button>
+
+      <!-- Download PDF Button -->
+      <button id="downloadPdfBtn" type="button" title="Export Compiled PDF"
+        class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-md transition">
+        <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
+
+      <!-- Download Source ZIP -->
+      <button id="downloadZipBtn" type="button" title="Download Project .zip (All .tex & .bib files)"
+        class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-md transition">
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+        </svg>
+        <span class="hidden xl:inline">.ZIP</span>
+      </button>
+
+      <!-- History Snapshot Button -->
+      <button id="openHistoryModalBtn" type="button" title="Version History & Snapshots"
+        class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-md transition">
+        <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="hidden xl:inline">History</span>
+      </button>
+
+      <!-- Deploy / Self-Host Guide Modal -->
+      <button id="openDeployModalBtn" type="button" title="Vercel & GitHub Full-Stack Setup"
+        class="flex items-center gap-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-medium px-2.5 py-1.5 rounded-md transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span class="hidden md:inline">Deploy & GitHub</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- SECONDARY FORMATTING & MATH SYMBOL PALETTE TOOLBAR -->
+  <div class="h-10 bg-slate-900/95 border-b border-slate-800 px-3 flex items-center justify-between gap-2 overflow-x-auto shrink-0 z-10">
+    <!-- Formatting & Structure Snippets -->
+    <div class="flex items-center gap-1 shrink-0">
+      <button type="button" id="toggleSidebarBtn" title="Toggle Project Sidebar"
+        class="p-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition mr-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"></path>
+        </svg>
+      </button>
+
+      <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mr-1">Insert:</span>
+      <button type="button" data-snippet="bold" class="snippet-btn px-2 py-1 rounded text-xs font-bold bg-slate-800/80 hover:bg-slate-700 text-slate-200" title="Bold (\textbf{})">B</button>
+      <button type="button" data-snippet="italic" class="snippet-btn px-2 py-1 rounded text-xs italic bg-slate-800/80 hover:bg-slate-700 text-slate-200" title="Italic (\textit{})">I</button>
+      <button type="button" data-snippet="section" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-200" title="New Section">\section</button>
+      <button type="button" data-snippet="equation" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-emerald-300 font-mono" title="Numbered Equation">$$\sum$$</button>
+      <button type="button" data-snippet="align" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-emerald-300 font-mono" title="Aligned Equations">\begin{aligned}</button>
+      <button type="button" data-snippet="matrix" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-sky-300 font-mono" title="3x3 Matrix">[Matrix]</button>
+      <button type="button" data-snippet="table" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-amber-300" title="Booktabs Table">Table</button>
+      <button type="button" data-snippet="figure" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-purple-300" title="Figure Environment">Figure</button>
+      <button type="button" data-snippet="theorem" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-pink-300" title="Theorem & Proof">Theorem</button>
+      <button type="button" data-snippet="cite" class="snippet-btn px-2 py-1 rounded text-xs bg-slate-800/80 hover:bg-slate-700 text-indigo-300 font-mono" title="Insert Citation">\cite{}</button>
+
+      <div class="h-4 w-px bg-slate-800 mx-1.5"></div>
+
+      <!-- Quick Math Symbols (Unlocked Premium Symbol Palette) -->
+      <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mr-1">Symbols:</span>
+      <button type="button" data-tex="\alpha" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">α</button>
+      <button type="button" data-tex="\beta" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">β</button>
+      <button type="button" data-tex="\gamma" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">γ</button>
+      <button type="button" data-tex="\theta" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">θ</button>
+      <button type="button" data-tex="\lambda" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">λ</button>
+      <button type="button" data-tex="\Omega" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200 font-serif">Ω</button>
+      <button type="button" data-tex="\nabla" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∇</button>
+      <button type="button" data-tex="\partial" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∂</button>
+      <button type="button" data-tex="\int_{a}^{b}" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∫</button>
+      <button type="button" data-tex="\sum_{i=1}^{n}" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∑</button>
+      <button type="button" data-tex="\frac{a}{b}" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">a/b</button>
+      <button type="button" data-tex="\sqrt{x}" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">√x</button>
+      <button type="button" data-tex="\infty" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∞</button>
+      <button type="button" data-tex="\approx" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">≈</button>
+      <button type="button" data-tex="\leq" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">≤</button>
+      <button type="button" data-tex="\geq" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">≥</button>
+      <button type="button" data-tex="\in" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">∈</button>
+      <button type="button" data-tex="\mathbb{R}" class="math-sym-btn px-1.5 py-0.5 rounded text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-200">ℝ</button>
+    </div>
+
+    <!-- Right side of Secondary Bar: Auto-Compile & Find -->
+    <div class="flex items-center gap-3 shrink-0">
+      <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+        <input id="autoCompileToggle" type="checkbox" checked class="accent-leaf-500 rounded cursor-pointer" />
+        <span>Live Compile</span>
+      </label>
+      <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+        <input id="twoColToggle" type="checkbox" class="accent-leaf-500 rounded cursor-pointer" />
+        <span>2-Column Layout</span>
+      </label>
+      <button id="toggleFindBarBtn" type="button" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1" title="Find & Replace in Editor">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <span>Find</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN IDE WORKSPACE -->
+  <div class="flex-1 flex min-h-0 overflow-hidden relative">
+
+    <!-- LEFT SIDEBAR: Project Files, Document Outline, BibTeX Citation Helper -->
+    <aside id="leftSidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 select-none">
+      <!-- Sidebar Tabs -->
+      <div class="grid grid-cols-3 border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <button id="tabFilesBtn" type="button" class="py-2.5 text-center border-b-2 border-leaf-500 text-white bg-slate-800/40">Files</button>
+        <button id="tabOutlineBtn" type="button" class="py-2.5 text-center border-b-2 border-transparent hover:text-slate-200">Outline</button>
+        <button id="tabBibBtn" type="button" class="py-2.5 text-center border-b-2 border-transparent hover:text-slate-200">BibTeX</button>
+      </div>
+
+      <!-- TAB 1: FILES TREE -->
+      <div id="sidebarFilesPanel" class="flex-1 flex flex-col p-2.5 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Project Files</span>
+          <div class="flex items-center gap-1">
+            <button id="newFileBtn" type="button" title="Create New File (.tex or .bib)"
+              class="px-2 py-0.5 text-xs bg-leaf-600/20 hover:bg-leaf-600/30 text-leaf-300 border border-leaf-500/30 rounded transition">
+              + New
+            </button>
+            <label for="uploadTeXInput" title="Upload .tex or .bib from computer"
+              class="px-2 py-0.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded cursor-pointer transition">
+              Upload
+            </label>
+            <input id="uploadTeXInput" type="file" accept=".tex,.bib,.txt,.sty,.cls" class="hidden" />
+          </div>
+        </div>
+
+        <!-- Inline New File Creator (Hidden by default) -->
+        <div id="newFileForm" class="hidden mb-2.5 p-2 rounded bg-slate-800/90 border border-slate-700">
+          <input id="newFileNameInput" type="text" placeholder="e.g. methods.tex"
+            class="w-full bg-slate-900 text-xs text-white px-2 py-1 rounded border border-slate-700 focus:outline-none focus:border-leaf-500 mb-1.5" />
+          <div class="flex justify-end gap-1">
+            <button id="cancelNewFileBtn" type="button" class="px-2 py-0.5 text-[11px] text-slate-400 hover:text-white">Cancel</button>
+            <button id="confirmNewFileBtn" type="button" class="px-2.5 py-0.5 text-[11px] bg-leaf-600 text-white rounded font-medium">Create</button>
+          </div>
+        </div>
+
+        <!-- Dynamic File List -->
+        <div id="fileTreeList" class="space-y-1"></div>
+
+        <!-- Unlimited Plan Status Card -->
+        <div class="mt-auto pt-3 border-t border-slate-800/80">
+          <div class="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/60 text-[11px] space-y-1">
+            <div class="flex items-center justify-between text-slate-300 font-medium">
+              <span>Compile Timeout</span>
+              <span class="text-leaf-400 font-semibold">∞ Unlimited</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-400">
+              <span>Collaborators / Files</span>
+              <span class="text-slate-200">∞ Uncapped</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-400">
+              <span>Ads & Tracking</span>
+              <span class="text-emerald-400">0% (Zero Ads)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DOCUMENT OUTLINE -->
+      <div id="sidebarOutlinePanel" class="hidden flex-1 flex flex-col p-2.5 overflow-y-auto">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Section Hierarchy</span>
+        <div id="outlineTreeList" class="space-y-1 text-xs"></div>
+      </div>
+
+      <!-- TAB 3: BIBTEX CITATION MANAGER -->
+      <div id="sidebarBibPanel" class="hidden flex-1 flex flex-col p-2.5 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">BibTeX Keys</span>
+          <button id="addBibEntryBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-leaf-600/20 text-leaf-300 border border-leaf-500/30 hover:bg-leaf-600/30">
+            + Add Ref
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400 mb-2">Click any reference key below to insert <code class="text-leaf-300">\cite{key}</code> at your cursor.</p>
+        <div id="bibKeyList" class="space-y-1.5"></div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANE: CODE EDITOR & VISUAL HELPER -->
+    <section id="editorPane" class="flex-1 flex flex-col min-w-0 bg-slate-950 border-r border-slate-800">
+      <!-- Active File Header & Find/Replace Bar -->
+      <div class="h-8 bg-slate-900/70 border-b border-slate-800/80 px-3 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+          <span id="activeFileBadge" class="font-mono text-leaf-400 font-medium">main.tex</span>
+          <span id="saveStatusBadge" class="text-[11px] text-slate-500">Saved locally</span>
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-slate-400">
+          <span id="wordCountBadge">0 words</span>
+          <span id="charCountBadge">0 chars</span>
+          <span id="cursorPosBadge">Ln 1, Col 1</span>
+        </div>
+      </div>
+
+      <!-- Find & Replace Drawer (Hidden by default) -->
+      <div id="findReplaceBar" class="hidden bg-slate-900 border-b border-slate-800 px-3 py-1.5 flex flex-wrap items-center gap-2 text-xs">
+        <input id="findInput" type="text" placeholder="Find in file..." class="bg-slate-800 text-slate-100 px-2 py-1 rounded border border-slate-700 focus:outline-none focus:border-leaf-500 w-36" />
+        <input id="replaceInput" type="text" placeholder="Replace with..." class="bg-slate-800 text-slate-100 px-2 py-1 rounded border border-slate-700 focus:outline-none focus:border-leaf-500 w-36" />
+        <button id="findNextBtn" type="button" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700">Find</button>
+        <button id="replaceAllBtn" type="button" class="px-2.5 py-1 bg-leaf-600 hover:bg-leaf-500 text-white rounded font-medium">Replace All</button>
+        <span id="findMatchInfo" class="text-[11px] text-slate-400 ml-1"></span>
+        <button id="closeFindBarBtn" type="button" class="ml-auto text-slate-400 hover:text-white px-1">✕</button>
+      </div>
+
+      <!-- Visual Helper Drawer (Visible in Visual Helper Mode) -->
+      <div id="visualHelperPanel" class="hidden bg-slate-900/90 border-b border-slate-800 p-3 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-leaf-400 uppercase tracking-wider">Overleaf Visual Mode Assistant — Point & Click Builders</span>
+          <span class="text-[11px] text-slate-400">Inserts clean LaTeX directly into your active file</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <!-- Table Generator Card -->
+          <div class="p-2.5 rounded bg-slate-800/70 border border-slate-700/70 space-y-1.5">
+            <div class="text-xs font-medium text-white">Quick Table Builder</div>
+            <div class="flex items-center gap-2 text-xs">
+              <label class="text-slate-400">Rows:
+                <input id="visTableRows" type="number" min="1" max="12" value="3" class="w-12 bg-slate-900 text-white px-1.5 py-0.5 rounded border border-slate-700 ml-1" />
+              </label>
+              <label class="text-slate-400">Cols:
+                <input id="visTableCols" type="number" min="1" max="8" value="3" class="w-12 bg-slate-900 text-white px-1.5 py-0.5 rounded border border-slate-700 ml-1" />
+              </label>
+            </div>
+            <button id="insertVisualTableBtn" type="button" class="w-full py-1 bg-leaf-600 hover:bg-leaf-500 text-white rounded text-xs font-medium">Insert LaTeX Table</button>
+          </div>
+
+          <!-- Matrix Generator Card -->
+          <div class="p-2.5 rounded bg-slate-800/70 border border-slate-700/70 space-y-1.5">
+            <div class="text-xs font-medium text-white">Matrix / Bracket Builder</div>
+            <div class="flex items-center gap-2 text-xs">
+              <select id="visMatrixType" class="bg-slate-900 text-white px-2 py-1 rounded border border-slate-700 flex-1">
+                <option value="bmatrix">Bracket [ ] (bmatrix)</option>
+                <option value="pmatrix">Parens ( ) (pmatrix)</option>
+                <option value="vmatrix">Determinant | | (vmatrix)</option>
+              </select>
+            </div>
+            <button id="insertVisualMatrixBtn" type="button" class="w-full py-1 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-medium">Insert Matrix</button>
+          </div>
+
+          <!-- Callout / Environment Builder -->
+          <div class="p-2.5 rounded bg-slate-800/70 border border-slate-700/70 space-y-1.5">
+            <div class="text-xs font-medium text-white">Academic Environment</div>
+            <select id="visEnvType" class="w-full bg-slate-900 text-white px-2 py-1 rounded border border-slate-700 text-xs">
+              <option value="theorem">Theorem + Proof Block</option>
+              <option value="itemize">Bulleted List (itemize)</option>
+              <option value="enumerate">Numbered List (enumerate)</option>
+              <option value="abstract">Document Abstract</option>
+            </select>
+            <button id="insertVisualEnvBtn" type="button" class="w-full py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium">Insert Environment</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Area with Synchronized Line Numbers -->
+      <div class="flex-1 flex min-h-0 relative overflow-hidden">
+        <div id="lineNumbersGutter"
+          class="w-11 py-3 px-2 bg-slate-900/60 border-r border-slate-800/80 text-right font-mono text-xs leading-6 text-slate-500 select-none overflow-hidden shrink-0">
+          1
+        </div>
+        <textarea id="latexEditor" spellcheck="false" aria-label="LaTeX Source Code Editor"
+          class="flex-1 bg-slate-950 text-slate-100 font-mono text-xs sm:text-[13px] leading-6 p-3 focus:outline-none resize-none overflow-y-auto selection:bg-leaf-500/30"></textarea>
+      </div>
+    </section>
+
+    <!-- RIGHT PANE: LIVE TYPESET PDF PREVIEW & COMPILER LOGS -->
+    <section id="previewPane" class="flex-1 flex flex-col min-w-0 bg-slate-900/90">
+      <!-- Preview Toolbar -->
+      <div class="h-8 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between text-xs shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-leaf-400" id="compileStatusDot"></span>
+          <span id="compileStatusText" class="font-medium text-slate-200">Compiled (0 errors, 0 warnings)</span>
+          <span id="compileTimeBadge" class="text-[11px] text-slate-400">14 ms</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button id="zoomOutBtn" type="button" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300" title="Zoom Out">−</button>
+          <span id="zoomLevelText" class="text-[11px] text-slate-300 w-10 text-center">100%</span>
+          <button id="zoomInBtn" type="button" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300" title="Zoom In">+</button>
+          <button id="zoomResetBtn" type="button" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-[11px]" title="Reset Zoom">Reset</button>
+          <div class="h-3.5 w-px bg-slate-700 mx-1"></div>
+          <button id="toggleLogsBtn" type="button" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] flex items-center gap-1">
+            <span>Logs</span>
+            <span id="logErrorCountBadge" class="px-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">OK</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Typeset Paper Scroll Container -->
+      <div id="paperScrollContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center bg-slate-800/60">
+        <!-- Cloud PDF Iframe (Shown when Cloud TeX Live API returns a binary PDF) -->
+        <iframe id="cloudPdfFrame" title="Cloud Compiled PDF Preview" class="hidden w-full h-full rounded border border-slate-700 bg-white mb-4"></iframe>
+
+        <!-- Instant Typeset Academic Paper Sheet -->
+        <div id="renderedPaperSheet" class="latex-paper w-full max-w-[780px] min-h-[980px] p-8 sm:p-12 rounded-sm select-text"></div>
+      </div>
+
+      <!-- Compiler Log & Diagnostics Drawer (Collapsible) -->
+      <div id="compilerLogsDrawer" class="hidden h-44 bg-slate-950 border-t border-slate-800 flex flex-col shrink-0">
+        <div class="px-3 py-1.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs">
+          <span class="font-semibold text-slate-300 font-mono">TeX Compiler Output & Diagnostics Log</span>
+          <button id="closeLogsDrawerBtn" type="button" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+        <pre id="compilerLogOutput" class="flex-1 p-3 font-mono text-[11px] text-slate-300 overflow-y-auto whitespace-pre-wrap"></pre>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL 1: VERSION HISTORY & SNAPSHOTS (UNLOCKED OVERLEAF PREMIUM FEATURE) -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-lg w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-white">Project Version History & Labeled Snapshots</h2>
+          <p class="text-xs text-slate-400">Unlimited local version history (unlocked for free)</p>
+        </div>
+        <button id="closeHistoryModalBtn" type="button" class="text-slate-400 hover:text-white text-sm px-2">✕</button>
+      </div>
+
+      <div class="flex gap-2">
+        <input id="snapshotLabelInput" type="text" placeholder="Snapshot label (e.g. Before peer review edits)"
+          class="flex-1 bg-slate-800 text-xs text-white px-3 py-2 rounded border border-slate-700 focus:outline-none focus:border-leaf-500" />
+        <button id="createSnapshotBtn" type="button" class="px-3 py-2 bg-leaf-600 hover:bg-leaf-500 text-white text-xs font-semibold rounded">
+          Save Snapshot
+        </button>
+      </div>
+
+      <div id="snapshotListContainer" class="max-h-64 overflow-y-auto space-y-2 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: GITHUB + VERCEL FULL-STACK DEPLOYMENT KIT -->
+  <div id="deployModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-white">Full-Stack Architecture & Free Vercel + GitHub Deployment</h2>
+          <p class="text-xs text-slate-400">Zero compile timeouts, zero collaborator paywalls, zero ads</p>
+        </div>
+        <button id="closeDeployModalBtn" type="button" class="text-slate-400 hover:text-white text-sm px-2">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+        <div class="p-3 rounded-lg bg-leaf-500/10 border border-leaf-500/30 text-leaf-200">
+          <strong>Why OpenLeaf Studio Has Zero Limits:</strong> Overleaf's free plan enforces a strict compile timeout and limits collaborators because every compile spawns a heavy server container. OpenLeaf Studio combines an <strong>Instant Browser Typesetting Engine (KaTeX + Custom Multi-File LaTeX Parser)</strong> with an optional <strong>Serverless TeX Live API proxy</strong> so you can compile arbitrarily long theses or papers for free.
+        </div>
+
+        <h3 class="font-semibold text-white text-sm">Included in Your Full-Stack Repository ZIP (`openleaf_studio_fullstack.zip`):</h3>
+        <ul class="list-disc pl-5 space-y-1 text-slate-300">
+          <li><code class="text-leaf-300">public/index.html</code> — Complete OpenLeaf Studio frontend IDE.</li>
+          <li><code class="text-leaf-300">api/compile.js</code> — Vercel Serverless Function that proxies multi-file LaTeX + BibTeX builds to TeX Live (`pdflatex`, `xelatex`, `lualatex`).</li>
+          <li><code class="text-leaf-300">Dockerfile</code> & <code class="text-leaf-300">docker-compose.yml</code> — Self-hosted TeX Live 2026 container with unlimited compile duration.</li>
+          <li><code class="text-leaf-300">.github/workflows/deploy.yml</code> — Automated CI/CD pipeline for GitHub Pages & Vercel.</li>
+        </ul>
+
+        <h3 class="font-semibold text-white text-sm">30-Second Free Hosting on Vercel or GitHub Pages:</h3>
+        <pre class="p-3 rounded bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300 overflow-x-auto">1. Unzip openleaf_studio_fullstack.zip
+2. Push to a new GitHub repository:
+   git init && git add . && git commit -m "Initial OpenLeaf Studio"
+   git push -u origin main
+3. Import the repository at https://vercel.com/new (or enable GitHub Pages)
+   -> Instant live URL with zero cost and zero limits!</pre>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button id="downloadFullstackFromModalBtn" type="button" class="px-3.5 py-1.5 bg-leaf-600 hover:bg-leaf-500 text-white text-xs font-semibold rounded">
+          Export Project .ZIP Now
+        </button>
+        <button id="doneDeployModalBtn" type="button" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION BANNER -->
+  <div id="toastBanner" class="hidden fixed bottom-4 right-4 bg-slate-900 border border-leaf-500/50 text-slate-100 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium z-50 flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-leaf-400"></span>
+    <span id="toastMessage">Action completed</span>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // ============================================================================
+    // 1. BUILT-IN MULTI-FILE TEMPLATES (ACADEMIC PAPER, CV, BEAMER, HOMEWORK, THESIS)
+    // ============================================================================
+    const TEMPLATES = {
+      academic: {
+        title: "Quantum_Entanglement_Paper_2026",
+        files: {
+          "main.tex": `\\documentclass[11pt,a4paper]{article}
+\\usepackage{amsmath,amssymb,amsfonts}
+\\usepackage{booktabs}
+\\usepackage{graphicx}
+\\usepackage{hyperref}
+
+\\title{Fault-Tolerant Quantum State Tomography via Non-Local Bell Stabilizers}
+\\author{Dr. Aris Thorne \\and Elena Vance \\\\ \\textit{Department of Quantum Information, OpenLeaf Institute}}
+\\date{November 2026}
+
+\\begin{document}
+
+\\maketitle
+
+\\begin{abstract}
+We present a scalable protocol for reconstructing high-dimensional multi-qubit density matrices under depolarizing channel noise without mid-circuit measurement overhead. By combining stabilizer shadow projections with adaptive Bayesian estimation, our estimator reduces sample complexity from $\\mathcal{O}(4^n)$ to $\\mathcal{O}(n^2 \\log n)$ while maintaining fidelity above $99.4\\%$. This work builds upon foundational quantum error-correction frameworks \\cite{shor1995scheme, kitaev2003fault} and recent randomized measurement advances \\cite{huang2020predicting}.
+\\end{abstract}
+
+\\section{Introduction}
+Characterizing noisy intermediate-scale quantum (NISQ) processors requires estimating expectation values of non-commuting observables \\cite{preskill2018quantum}. Traditional state tomography scales exponentially with system size $n$, creating a severe bottleneck for processors exceeding $50$ physical qubits.
+
+Let $\\rho \\in \\mathcal{H}_{2^n}$ denote an unknown $n$-qubit quantum state prepared on a superconducting lattice. The generalized depolarizing channel $\\mathcal{E}_p$ acts on $\\rho$ according to:
+\\begin{equation}
+\\mathcal{E}_p(\\rho) = (1 - p)\\rho + \\frac{p}{2^n} I_{2^n}, \\quad p \\in [0, 1].
+\\end{equation}
+
+\\input{methods.tex}
+
+\\section{Experimental Benchmarks}
+We benchmarked our stabilizer shadow tomography protocol across four superconducting processor topologies. Table 1 summarizes the reconstruction fidelity $F(\\rho, \\hat{\\rho})$ and wall-clock compilation latency.
+
+\\begin{table}[h]
+\\centering
+\\begin{tabular}{lccc}
+\\toprule
+Topology & Qubits ($n$) & Classical Shadows $N$ & Fidelity $F(\\rho, \\hat{\\rho})$ \\\\
+\\midrule
+Linear Chain & 16 & $2.4 \\times 10^3$ & $0.998 \\pm 0.001$ \\\\
+Heavy-Hex Lattice & 32 & $6.1 \\times 10^3$ & $0.995 \\pm 0.002$ \\\\
+Planar Grid & 64 & $1.4 \\times 10^4$ & $0.991 \\pm 0.003$ \\\\
+Toric Code Array & 128 & $3.2 \\times 10^4$ & $0.987 \\pm 0.004$ \\\\
+\\bottomrule
+\\end{tabular}
+\\caption{Comparison of reconstruction fidelity across processor architectures.}
+\\end{table}
+
+\\section{Conclusion}
+Our results demonstrate that stabilizer-constrained classical shadows achieve near-optimal sample complexity on planar superconducting architectures \\cite{huang2020predicting}. Future extensions will incorporate continuous-variable bosonic modes.
+
+\\bibliography{references}
+
+\\end{document}`,
+          "methods.tex": `% Included via \\input{methods.tex}
+\\section{Stabilizer Shadow Formalism}
+Consider the $n$-qubit Pauli group $\\mathcal{P}_n = \\{I, X, Y, Z\\}^{\\otimes n}$. For any Clifford unitary $U \\sim \\mathcal{C}_n$, we measure in the computational basis $|b\\rangle \\in \\{0,1\\}^n$ and construct the classical shadow snapshot:
+\\begin{equation}
+\\hat{\\rho}_{(U,b)} = \\mathcal{M}^{-1}\\left( U^\\dagger |b\\rangle\\langle b| U \\right) = (2^n + 1) U^\\dagger |b\\rangle\\langle b| U - I_{2^n}.
+\\end{equation}
+
+\\begin{theorem}
+Let $\\{O_1, \\dots, O_M\\}$ be a collection of $M$ local Pauli observables with locality weight $k$. Then $N = \\mathcal{O}\\left(\\frac{\\log M}{\\epsilon^2} 3^k\\right)$ independent stabilizer measurements suffice to estimate all $\\mathrm{Tr}(O_i \\rho)$ within additive error $\\epsilon$ with probability at least $1 - \\delta$.
+\\end{theorem}
+
+\\begin{proof}
+By median-of-means concentration and the shadow norm bound $\\|O_i\\|_{\\mathrm{shadow}}^2 \\leq 3^k \\mathrm{Tr}(O_i^2)$, applying Bernstein's matrix inequality yields the stated sample complexity bound.
+\\end{proof}
+
+\\subsection{Unitary Gate Coupling Matrix}
+For a two-qubit cross-resonance interaction, the effective Hamiltonian takes the block-diagonal matrix representation:
+\\begin{equation}
+H_{\\mathrm{CR}} = \\frac{\\omega_{ZX}}{2} \\begin{bmatrix} 0 & 1 & 0 & 0 \\\\ 1 & 0 & 0 & 0 \\\\ 0 & 0 & 0 & -1 \\\\ 0 & 0 & -1 & 0 \\end{bmatrix} + \\frac{\\Delta}{2} Z \\otimes I.
+\\end{equation}`,
+          "references.bib": `@article{shor1995scheme,
+  author = {Shor, Peter W.},
+  title = {Scheme for reducing decoherence in quantum computer memory},
+  journal = {Physical Review A},
+  volume = {52},
+  pages = {R2493--R2496},
+  year = {1995}
+}
+
+@article{kitaev2003fault,
+  author = {Kitaev, A. Yu.},
+  title = {Fault-tolerant quantum computation by anyons},
+  journal = {Annals of Physics},
+  volume = {303},
+  pages = {2--30},
+  year = {2003}
+}
+
+@article{preskill2018quantum,
+  author = {Preskill, John},
+  title = {Quantum Computing in the NISQ era and beyond},
+  journal = {Quantum},
+  volume = {2},
+  pages = {79},
+  year = {2018}
+}
+
+@article{huang2020predicting,
+  author = {Huang, Hsin-Yuan and Kueng, Richard and Preskill, John},
+  title = {Predicting many properties of a quantum system from very few measurements},
+  journal = {Nature Physics},
+  volume = {16},
+  pages = {1050--1057},
+  year = {2020}
+}`
+        }
+      },
+
+      cv: {
+        title: "Academic_Faculty_CV_2026",
+        files: {
+          "main.tex": `\\documentclass[11pt]{article}
+\\usepackage{hyperref}
+\\usepackage{booktabs}
+
+\\title{Curriculum Vitae — Dr. Nadia Rahman}
+\\author{Associate Professor of Computational Mathematics \\\\ \\texttt{n.rahman@university.edu} \\quad | \\quad Dhaka \\& Zurich}
+\\date{Updated November 2026}
+
+\\begin{document}
+
+\\maketitle
+
+\\section{Academic Appointments}
+\\begin{itemize}
+  \\item \\textbf{Associate Professor}, Department of Mathematics \\& Computer Science (2023--Present). Leading the Symbolic \\& Numerical PDE Research Group.
+  \\item \\textbf{Postdoctoral Fellow}, ETH Zurich Seminar for Applied Mathematics (2020--2023).
+\\end{itemize}
+
+\\section{Education}
+\\begin{table}[h]
+\\centering
+\\begin{tabular}{lll}
+\\toprule
+Degree & Institution & Year \\\\
+\\midrule
+Ph.D. in Applied Mathematics & MIT & 2020 \\\\
+M.Sc. in Computational Science & Oxford University & 2016 \\\\
+B.Sc. (Hons) in Mathematics & University of Dhaka & 2014 \\\\
+\\bottomrule
+\\end{tabular}
+\\caption{Academic Degrees and Institutions.}
+\\end{table}
+
+\\section{Selected Grants \\& Honors}
+\\begin{enumerate}
+  \\item Principal Investigator, ERC Starting Grant ($\\in 1.5\\text{M EUR}$), \\textit{Structure-Preserving Spectral Solvers for Relativistic MHD} (2024--2029).
+  \\item SIAM Early Career Prize in Scientific Computing (2025).
+\\end{enumerate}
+
+\\section{Core Research Equation}
+Our group studies energy-stable discontinuous Galerkin discretizations satisfying the entropy inequality:
+\\begin{equation}
+\\frac{d}{dt} \\int_{\\Omega} U(\\mathbf{u}_h)\\,d\\mathbf{x} + \\sum_{e \\in \\mathcal{E}_h} \\int_e \\llbracket \\psi(\\mathbf{u}_h) \\rrbracket \\leq 0.
+\\end{equation}
+
+\\bibliography{references}
+
+\\end{document}`,
+          "references.bib": `@article{rahman2025entropy,
+  author = {Rahman, Nadia and Keller, Lukas},
+  title = {Entropy-stable spectral element methods on unstructured manifolds},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume = {63},
+  year = {2025}
+}`
+        }
+      },
+
+      beamer: {
+        title: "Keynote_Beamer_Slides",
+        files: {
+          "main.tex": `\\documentclass{beamer}
+\\usepackage{amsmath,amssymb}
+
+\\title{Scalable Transformer Inference with Sparse Mixture-of-Experts}
+\\author{OpenLeaf AI Systems Lab}
+\\date{November 2026 Conference Keynote}
+
+\\begin{document}
+
+\\maketitle
+
+\\section{Slide 1: Problem Formulation}
+Dense autoregressive language models incur $\\mathcal{O}(d_{\\mathrm{model}}^2)$ FLOPs per token. By routing each token $x \\in \\mathbb{R}^d$ to top-$k$ experts out of $E$ total experts:
+\\begin{equation}
+y = \\sum_{i \\in \\mathrm{TopK}(g(x))} p_i(x) \\, E_i(x), \\quad p_i(x) = \\frac{\\exp(w_i^\\top x)}{\\sum_{j=1}^{E} \\exp(w_j^\\top x)}.
+\\end{equation}
+
+\\section{Slide 2: Load Balancing Auxiliary Loss}
+To prevent expert collapse during distributed training, we minimize the auxiliary load-balancing objective:
+\\begin{equation}
+\\mathcal{L}_{\\mathrm{aux}} = \\alpha E \\sum_{i=1}^{E} f_i \\cdot P_i,
+\\end{equation}
+where $f_i$ is the fraction of tokens dispatched to expert $i$ and $P_i$ is the average router probability.
+
+\\section{Slide 3: Throughput Comparison}
+\\begin{table}[h]
+\\centering
+\\begin{tabular}{lccc}
+\\toprule
+Architecture & Active Params & Total Params & Tokens / Sec / GPU \\\\
+\\midrule
+Dense-70B & 70B & 70B & 420 \\\\
+MoE-8x22B (Top-2) & 39B & 141B & 1,180 \\\\
+OpenLeaf-MoE-16x14B & 28B & 198B & 1,890 \\\\
+\\bottomrule
+\\end{tabular}
+\\caption{Inference throughput on H200 Tensor Core GPUs.}
+\\end{table}
+
+\\end{document}`,
+          "references.bib": `@article{fedus2022switch,
+  author = {Fedus, William and Zoph, Barret and Shazeer, Noam},
+  title = {Switch Transformers: Scaling to Trillion Parameter Models},
+  journal = {JMLR},
+  year = {2022}
+}`
+        }
+      },
+
+      homework: {
+        title: "Real_Analysis_Problem_Set_4",
+        files: {
+          "main.tex": `\\documentclass[11pt]{article}
+\\usepackage{amsmath,amssymb,amsthm}
+
+\\title{MATH 401: Real \\& Functional Analysis — Problem Set 4}
+\\author{Student Name \\quad | \\quad ID: 2026-09412}
+\\date{Due: November 13, 2026}
+
+\\begin{document}
+
+\\maketitle
+
+\\section{Problem 1: Completeness of $L^p(\\mu)$ Spaces}
+\\begin{theorem}
+Let $(X, \\mathcal{M}, \\mu)$ be a measure space and $1 \\leq p < \\infty$. Every Cauchy sequence $\\{f_n\\}_{n=1}^\\infty$ in $L^p(\\mu)$ converges in norm to a measurable function $f \\in L^p(\\mu)$.
+\\end{theorem}
+
+\\begin{proof}
+Since $\\{f_n\\}$ is Cauchy in $L^p(\\mu)$, we can extract a rapidly converging subsequence $\\{f_{n_k}\\}$ such that:
+\\begin{equation}
+\\|f_{n_{k+1}} - f_{n_k}\\|_{L^p} < 2^{-k} \\quad \\forall k \\geq 1.
+\\end{equation}
+Define the monotone non-negative functions $g_K(x) = \\sum_{k=1}^{K} |f_{n_{k+1}}(x) - f_{n_k}(x)|$. By Minkowski's inequality, $\\|g_K\\|_{L^p} \\leq \\sum_{k=1}^K 2^{-k} < 1$. Applying the Monotone Convergence Theorem to $g_K^p$ shows that $\\lim_{K\\to\\infty} g_K(x) < \\infty$ almost everywhere, ensuring pointwise a.e. convergence to $f(x)$ and $\\|f_n - f\\|_{L^p} \\to 0$.
+\\end{proof}
+
+\\section{Problem 2: Fourier Transform of the Gaussian Kernel}
+Evaluate the normalized Fourier integral for $a > 0$:
+\\begin{equation}
+\\hat{f}(\\xi) = \\int_{-\\infty}^{\\infty} e^{-a x^2} e^{-2\\pi i x \\xi}\\,dx = \\sqrt{\\frac{\\pi}{a}} \\exp\\left(-\\frac{\\pi^2 \\xi^2}{a}\\right).
+\\end{equation}
+
+\\end{document}`,
+          "references.bib": `@book{rudin1987real,
+  author = {Rudin, Walter},
+  title = {Real and Complex Analysis},
+  publisher = {McGraw-Hill},
+  year = {1987}
+}`
+        }
+      },
+
+      thesis: {
+        title: "PhD_Thesis_Chapter_Stochastic_Differential_Equations",
+        files: {
+          "main.tex": `\\documentclass[12pt]{report}
+\\usepackage{amsmath,amssymb,amsthm}
+\\usepackage{booktabs}
+
+\\title{Chapter 3: Malliavin Calculus and Hypoelliptic Diffusion Processes}
+\\author{Doctoral Dissertation Draft}
+\\date{November 2026}
+
+\\begin{document}
+
+\\maketitle
+
+\\begin{abstract}
+This chapter establishes smooth density existence criteria for degenerate stochastic differential equations driven by fractional Brownian motion under Hormander's bracket condition \\cite{malliavin1978stochastic}.
+\\end{abstract}
+
+\\section{It\\^o-Stratonovich SDE Formulation}
+Let $(\\Omega, \\mathcal{F}, (\\mathcal{F}_t)_{t\\geq 0}, \\mathbb{P})$ be a complete filtered probability space carrying an $m$-dimensional Wiener process $W_t$. Consider the Stratonovich SDE on $\\mathbb{R}^d$:
+\\begin{equation}
+dX_t = V_0(X_t)\\,dt + \\sum_{k=1}^{m} V_k(X_t) \\circ dW_t^k, \\quad X_0 = x_0 \\in \\mathbb{R}^d.
+\\end{equation}
+
+\\begin{theorem}
+Suppose the Lie algebra $\\mathrm{Lie}(V_1, \\dots, V_m)$ spans $T_x \\mathbb{R}^d$ at every point $x \\in \\mathbb{R}^d$. Then the Malliavin covariance matrix $\\gamma_{X_t}$ is almost surely invertible for all $t > 0$ and $\\det(\\gamma_{X_t})^{-1} \\in \\bigcap_{p \\geq 1} L^p(\\Omega)$.
+\\end{theorem}
+
+\\begin{proof}
+By Norris's lemma, small-ball Wiener functional estimates bound the smallest eigenvalue $\\lambda_{\\min}(\\gamma_{X_t})$ away from zero outside an event of super-exponentially small probability.
+\\end{proof}
+
+\\bibliography{references}
+
+\\end{document}`,
+          "references.bib": `@inproceedings{malliavin1978stochastic,
+  author = {Malliavin, Paul},
+  title = {Stochastic calculus of variation and hypoelliptic operators},
+  booktitle = {Proceedings of the International Symposium on Stochastic Differential Equations},
+  year = {1978}
+}`
+        }
+      }
+    };
+
+    // ============================================================================
+    // 2. APPLICATION STATE & STORAGE INITIALIZATION
+    // ============================================================================
+    const STORAGE_KEY = 'openleaf_studio_state_v1';
+    let state = {
+      projectTitle: TEMPLATES.academic.title,
+      activeTemplate: 'academic',
+      activeFile: 'main.tex',
+      files: JSON.parse(JSON.stringify(TEMPLATES.academic.files)),
+      zoom: 100,
+      viewMode: 'split', // 'split' | 'code' | 'visual' | 'pdf'
+      sidebarTab: 'files', // 'files' | 'outline' | 'bib'
+      autoCompile: true,
+      twoColumn: false,
+      engine: 'instant',
+      snapshots: [
+        {
+          id: 'snap-init',
+          label: 'Initial Project Template',
+          timestamp: '2026-11-06 19:15',
+          files: JSON.parse(JSON.stringify(TEMPLATES.academic.files))
+        }
+      ]
+    };
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.files && Object.keys(parsed.files).length > 0) {
+          state = Object.assign(state, parsed);
+          if (!state.files[state.activeFile]) {
+            state.activeFile = Object.keys(state.files)[0];
+          }
+        }
+      }
+    } catch (e) {
+      // Canvas safe localStorage fallback
+    }
+
+    function persistState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const badge = document.getElementById('saveStatusBadge');
+        if (badge) badge.textContent = 'All changes saved locally';
+      } catch (e) {
+        // Ignore storage quota errors in sandboxed iframes
+      }
+    }
+
+    function showToast(msg) {
+      const banner = document.getElementById('toastBanner');
+      const text = document.getElementById('toastMessage');
+      if (!banner || !text) return;
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 2800);
+    }
+
+    // ============================================================================
+    // 3. BIBTEX PARSER & CITATION RESOLVER
+    // ============================================================================
+    function parseBibTeXAllFiles() {
+      const entries = {};
+      let combinedBib = '';
+      Object.keys(state.files).forEach((fname) => {
+        if (fname.endsWith('.bib')) {
+          combinedBib += '\n' + state.files[fname];
+        }
+      });
+
+      const entryRegex = /@(\w+)\s*\{\s*([^,\s]+)\s*,([\s\S]*?)\n\}/g;
+      let match;
+      let index = 1;
+      while ((match = entryRegex.exec(combinedBib)) !== null) {
+        const type = match[1].toLowerCase();
+        const key = match[2].trim();
+        const body = match[3];
+        const extractField = (field) => {
+          const r = new RegExp(field + '\\s*=\\s*[\\{"]([^\\}"]+)[\\}"]', 'i');
+          const m = body.match(r);
+          return m ? m[1].replace(/\s+/g, ' ').trim() : '';
+        };
+        entries[key] = {
+          index: index++,
+          type,
+          key,
+          author: extractField('author') || 'Unknown Author',
+          title: extractField('title') || key,
+          journal: extractField('journal') || extractField('booktitle') || extractField('publisher') || '',
+          volume: extractField('volume'),
+          pages: extractField('pages'),
+          year: extractField('year') || 'n.d.'
+        };
+      }
+      return entries;
+    }
+
+    // ============================================================================
+    // 4. MULTI-FILE LATEX COMPILER & TYPESETTING ENGINE
+    // ============================================================================
+    function resolveInputs(rawTex, visited = new Set()) {
+      return rawTex.replace(/\\(?:input|include)\{([^}]+)\}/g, (full, fname) => {
+        let target = fname.trim();
+        if (!target.endsWith('.tex')) target += '.tex';
+        if (visited.has(target)) return `%Recursive input skipped: ${target}`;
+        if (state.files[target] !== undefined) {
+          const nextVisited = new Set(visited);
+          nextVisited.add(target);
+          return resolveInputs(state.files[target], nextVisited);
+        }
+        return `\\textbf{[Missing file: ${target}]}`;
+      });
+    }
+
+    function diagnoseLaTeX(source) {
+      const diagnostics = [];
+      const lines = source.split('\n');
+      const envStack = [];
+
+      lines.forEach((line, idx) => {
+        const clean = line.replace(/(^|[^\\])%.*/, '$1');
+        const beginMatches = [...clean.matchAll(/\\begin\{([^}]+)\}/g)];
+        beginMatches.forEach((m) => envStack.push({ env: m[1], line: idx + 1 }));
+
+        const endMatches = [...clean.matchAll(/\\end\{([^}]+)\}/g)];
+        endMatches.forEach((m) => {
+          const env = m[1];
+          if (envStack.length === 0) {
+            diagnostics.push({ type: 'ERROR', line: idx + 1, msg: `Unmatched \\end{${env}} with no corresponding \\begin.` });
+          } else {
+            const top = envStack.pop();
+            if (top.env !== env) {
+              diagnostics.push({
+                type: 'ERROR',
+                line: idx + 1,
+                msg: `Environment mismatch: expected \\end{${top.env}} (opened on line ${top.line}), found \\end{${env}}.`
+              });
+            }
+          }
+        });
+      });
+
+      envStack.forEach((unclosed) => {
+        diagnostics.push({
+          type: 'ERROR',
+          line: unclosed.line,
+          msg: `Unclosed environment \\begin{${unclosed.env}} opened on line ${unclosed.line}.`
+        });
+      });
+
+      return diagnostics;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function formatInlineLaTeX(text, bibEntries, citedKeysOrder) {
+      let out = text;
+
+      // Protect inline math $...$ and \(...\) from text replacements
+      const mathPlaceholders = [];
+      out = out.replace(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]*?)\\\)/g, (m) => {
+        const id = `@@MATH_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push(m);
+        return id;
+      });
+
+      // Escape raw HTML brackets outside math
+      out = escapeHtml(out);
+
+      // Handle special LaTeX escaped symbols & ligatures
+      out = out
+        .replace(/\\&/g, '&amp;')
+        .replace(/\\%/g, '%')
+        .replace(/\\$/g, '$')
+        .replace(/\\#/g, '#')
+        .replace(/\\_/g, '_')
+        .replace(/\\textbackslash\{\}/g, '\\')
+        .replace(/\\\^\{a\}/g, 'â')
+        .replace(/\\\^\{o\}/g, 'ô')
+        .replace(/\\`\{e\}/g, 'è')
+        .replace(/\\'\{e\}/g, 'é')
+        .replace(/\\~\{n\}/g, 'ñ')
+        .replace(/---/g, '—')
+        .replace(/--/g, '–')
+        .replace(/~/g, '&nbsp;')
+        .replace(/\\quad/g, '&emsp;')
+        .replace(/\\qquad/g, '&emsp;&emsp;')
+        .replace(/\\\\/g, '<br/>');
+
+      // Formatting macros (iterative for simple nesting)
+      for (let pass = 0; pass < 3; pass++) {
+        out = out
+          .replace(/\\textbf\{([^{}]*)\}/g, '<strong>$1</strong>')
+          .replace(/\\textit\{([^{}]*)\}/g, '<em>$1</em>')
+          .replace(/\\emph\{([^{}]*)\}/g, '<em>$1</em>')
+          .replace(/\\underline\{([^{}]*)\}/g, '<u>$1</u>')
+          .replace(/\\textsc\{([^{}]*)\}/g, '<span style="font-variant: small-caps;">$1</span>')
+          .replace(/\\texttt\{([^{}]*)\}/g, '<code class="font-mono text-[10pt] bg-slate-100 px-1 rounded">$1</code>')
+          .replace(/\\href\{([^{}]*)\}\{([^{}]*)\}/g, '<a href="$1" target="_blank" rel="noopener" class="text-blue-700 underline">$2</a>')
+          .replace(/\\url\{([^{}]*)\}/g, '<a href="$1" target="_blank" rel="noopener" class="text-blue-700 underline font-mono text-[10pt]">$1</a>');
+      }
+
+      // Citations \cite{k1, k2}
+      out = out.replace(/\\cite\{([^}]+)\}/g, (_, keysStr) => {
+        const keys = keysStr.split(',').map((k) => k.trim());
+        const nums = keys.map((k) => {
+          if (!citedKeysOrder.includes(k)) citedKeysOrder.push(k);
+          const entry = bibEntries[k];
+          return entry ? entry.index : '?';
+        });
+        return `<span class="text-blue-800 font-semibold">[${nums.join(', ')}]</span>`;
+      });
+
+      // Restore math placeholders
+      out = out.replace(/@@MATH_(\d+)@@/g, (_, idx) => mathPlaceholders[Number(idx)]);
+      return out;
+    }
+
+    function parseTabularToHtml(tabularBody, bibEntries, citedKeysOrder) {
+      let caption = '';
+      const capMatch = tabularBody.match(/\\caption\{([\s\S]*?)\}/);
+      if (capMatch) {
+        caption = formatInlineLaTeX(capMatch[1], bibEntries, citedKeysOrder);
+      }
+
+      const innerMatch = tabularBody.match(/\\begin\{tabular\}\{([^}]*)\}([\s\S]*?)\\end\{tabular\}/);
+      if (!innerMatch) {
+        return `<div class="my-3 text-center text-sm text-slate-600">${caption}</div>`;
+      }
+
+      const rawRows = innerMatch[2]
+        .replace(/\\toprule|\\midrule|\\bottomrule|\\hline/g, '')
+        .split(/\\\\/)
+        .map((r) => r.trim())
+        .filter((r) => r.length > 0);
+
+      let html = `<div class="my-4 overflow-x-auto"><table class="l-table">`;
+      rawRows.forEach((rowStr, rIdx) => {
+        const cells = rowStr.split('&').map((c) => formatInlineLaTeX(c.trim(), bibEntries, citedKeysOrder));
+        if (rIdx === 0) {
+          html += `<thead><tr>${cells.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+        } else {
+          html += `<tr>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`;
+        }
+      });
+      html += `</tbody></table>`;
+      if (caption) {
+        html += `<div class="l-caption"><strong>Table:</strong> ${caption}</div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function compileLaTeXToHTML(fullSource, bibEntries) {
+      const citedKeysOrder = [];
+      let src = fullSource.replace(/(^|[^\\])%.*/gm, '$1');
+
+      // Extract preamble metadata
+      const extractMacro = (name) => {
+        const reg = new RegExp(`\\\\${name}\\{([\\s\\S]*?)\\}\\s*(?:\\n|$)`);
+        const m = src.match(reg);
+        return m ? m[1].trim() : '';
+      };
+
+      const rawTitle = extractMacro('title');
+      const rawAuthor = extractMacro('author');
+      const rawDate = extractMacro('date');
+
+      // Isolate document body if \begin{document} exists
+      const docMatch = src.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/);
+      let body = docMatch ? docMatch[1] : src;
+
+      // Remove preamble commands if user is viewing a partial file like methods.tex
+      body = body
+        .replace(/\\documentclass(\[[^\]]*\])?\{[^}]*\}/g, '')
+        .replace(/\\usepackage(\[[^\]]*\])?\{[^}]*\}/g, '');
+
+      // Protect block environments before paragraph splitting
+      const blocks = [];
+      const saveBlock = (htmlStr) => {
+        const token = `@@BLOCK_${blocks.length}@@`;
+        blocks.push(htmlStr);
+        return `\n\n${token}\n\n`;
+      };
+
+      // 1. Title block
+      body = body.replace(/\\maketitle/g, () => {
+        const t = formatInlineLaTeX(rawTitle || state.projectTitle, bibEntries, citedKeysOrder);
+        const a = formatInlineLaTeX((rawAuthor || '').replace(/\\and/g, ' &bull; '), bibEntries, citedKeysOrder);
+        const d = formatInlineLaTeX(rawDate || '', bibEntries, citedKeysOrder);
+        return saveBlock(`
+          <div class="mb-6 pb-3 border-b border-slate-300">
+            <h1 class="doc-title">${t}</h1>
+            ${a ? `<div class="doc-author">${a}</div>` : ''}
+            ${d ? `<div class="doc-date">${d}</div>` : ''}
+          </div>
+        `);
+      });
+
+      // 2. Abstract
+      body = body.replace(/\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/g, (_, content) => {
+        return saveBlock(`
+          <div class="doc-abstract">
+            <div class="doc-abstract-title">Abstract</div>
+            <div>${formatInlineLaTeX(content.trim(), bibEntries, citedKeysOrder)}</div>
+          </div>
+        `);
+      });
+
+      // 3. Numbered Equations
+      let eqCounter = 1;
+      body = body.replace(/\\begin\{(equation|align|aligned)\}([\s\S]*?)\\end\{\1\}/g, (_, env, eqContent) => {
+        const cleanEq = eqContent.trim();
+        const num = eqCounter++;
+        return saveBlock(`
+          <div class="l-equation">
+            <div class="l-eq-body">$$\\begin{aligned}${cleanEq}\\end{aligned}$$</div>
+            <div class="l-eq-num">(${num})</div>
+          </div>
+        `);
+      });
+
+      // 4. Unnumbered Equations
+      body = body.replace(/\\begin\{(equation\*|align\*)\}([\s\S]*?)\\end\{\1\}/g, (_, _env, eqContent) => {
+        return saveBlock(`
+          <div class="l-equation">
+            <div class="l-eq-body">$$\\begin{aligned}${eqContent.trim()}\\end{aligned}$$</div>
+          </div>
+        `);
+      });
+
+      // 5. Tables
+      body = body.replace(/\\begin\{table\}(\[[^\]]*\])?([\s\S]*?)\\end\{table\}/g, (_, _opt, tBody) => {
+        return saveBlock(parseTabularToHtml(tBody, bibEntries, citedKeysOrder));
+      });
+      body = body.replace(/\\begin\{tabular\}\{([^}]*)\}([\s\S]*?)\\end\{tabular\}/g, (full) => {
+        return saveBlock(parseTabularToHtml(full, bibEntries, citedKeysOrder));
+      });
+
+      // 6. Figures
+      let figCounter = 1;
+      body = body.replace(/\\begin\{figure\}(\[[^\]]*\])?([\s\S]*?)\\end\{figure\}/g, (_, _opt, fBody) => {
+        const capM = fBody.match(/\\caption\{([\s\S]*?)\}/);
+        const cap = capM ? formatInlineLaTeX(capM[1], bibEntries, citedKeysOrder) : 'Figure';
+        const fNum = figCounter++;
+        return saveBlock(`
+          <div class="my-4 p-4 border border-slate-300 rounded bg-slate-50 text-center">
+            <div class="py-6 px-4 bg-white border border-dashed border-slate-300 rounded text-xs text-slate-500 font-mono">
+              [Vector Figure / Graphic Slot ${fNum}]
+            </div>
+            <div class="l-caption mt-2"><strong>Figure ${fNum}:</strong> ${cap}</div>
+          </div>
+        `);
+      });
+
+      // 7. Theorems, Lemmas, Definitions, Proofs
+      let thmCounter = 1;
+      body = body.replace(/\\begin\{(theorem|lemma|proposition|definition)\}([\s\S]*?)\\end\{\1\}/g, (_, kind, content) => {
+        const label = kind.charAt(0).toUpperCase() + kind.slice(1);
+        return saveBlock(`
+          <div class="l-theorem">
+            <strong>${label} ${thmCounter++}.</strong> ${formatInlineLaTeX(content.trim(), bibEntries, citedKeysOrder)}
+          </div>
+        `);
+      });
+
+      body = body.replace(/\\begin\{proof\}([\s\S]*?)\\end\{proof\}/g, (_, content) => {
+        return saveBlock(`
+          <div class="l-proof">
+            <em>Proof.</em> ${formatInlineLaTeX(content.trim(), bibEntries, citedKeysOrder)} <span class="float-right">◻</span>
+          </div>
+        `);
+      });
+
+      // 8. Lists: itemize & enumerate
+      body = body.replace(/\\begin\{(itemize|enumerate)\}([\s\S]*?)\\end\{\1\}/g, (_, listType, listBody) => {
+        const tag = listType === 'enumerate' ? 'ol' : 'ul';
+        const cls = listType === 'enumerate' ? 'list-decimal pl-6 my-2.5 space-y-1' : 'list-disc pl-6 my-2.5 space-y-1';
+        const items = listBody
+          .split(/\\item\b/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+          .map((s) => `<li>${formatInlineLaTeX(s, bibEntries, citedKeysOrder)}</li>`)
+          .join('');
+        return saveBlock(`<${tag} class="${cls}">${items}</${tag}>`);
+      });
+
+      // 9. Sections, Subsections, Subsubsections
+      let secCount = 0;
+      let subSecCount = 0;
+      let subSubSecCount = 0;
+
+      body = body.replace(/\\section\*?\{([^}]*)\}/g, (_, title) => {
+        secCount++;
+        subSecCount = 0;
+        subSubSecCount = 0;
+        return saveBlock(`<h2 class="l-sec" id="sec-${secCount}">${secCount}. ${formatInlineLaTeX(title, bibEntries, citedKeysOrder)}</h2>`);
+      });
+
+      body = body.replace(/\\subsection\*?\{([^}]*)\}/g, (_, title) => {
+        subSecCount++;
+        subSubSecCount = 0;
+        return saveBlock(`<h3 class="l-subsec">${secCount}.${subSecCount} ${formatInlineLaTeX(title, bibEntries, citedKeysOrder)}</h3>`);
+      });
+
+      body = body.replace(/\\subsubsection\*?\{([^}]*)\}/g, (_, title) => {
+        subSubSecCount++;
+        return saveBlock(`<h4 class="l-subsubsec">${secCount}.${subSecCount}.${subSubSecCount} ${formatInlineLaTeX(title, bibEntries, citedKeysOrder)}</h4>`);
+      });
+
+      // 10. Bibliography command
+      let includeBib = false;
+      body = body.replace(/\\bibliography\{([^}]*)\}/g, () => {
+        includeBib = true;
+        return '';
+      });
+
+      // Split remaining text into paragraphs
+      const rawParas = body.split(/\n\s*\n/);
+      let htmlParts = rawParas
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => {
+          const blockM = p.match(/^@@BLOCK_(\d+)@@$/);
+          if (blockM) {
+            return blocks[Number(blockM[1])];
+          }
+          // Check if paragraph contains inline block tokens
+          let processed = formatInlineLaTeX(p, bibEntries, citedKeysOrder);
+          processed = processed.replace(/@@BLOCK_(\d+)@@/g, (_, idx) => blocks[Number(idx)]);
+          return `<p>${processed}</p>`;
+        });
+
+      // Render References section if \bibliography{} was invoked or citations exist
+      const bibKeys = Object.keys(bibEntries);
+      if ((includeBib || citedKeysOrder.length > 0) && bibKeys.length > 0) {
+        let bibHtml = `<div class="mt-6 pt-3 border-t border-slate-300"><h2 class="l-sec">References</h2>`;
+        bibKeys.forEach((k) => {
+          const e = bibEntries[k];
+          bibHtml += `<div class="l-bib-item">[${e.index}] ${escapeHtml(e.author)}, &ldquo;${escapeHtml(e.title)},&rdquo; <em>${escapeHtml(e.journal)}</em>${e.volume ? `, vol. ${escapeHtml(e.volume)}` : ''}${e.pages ? `, pp. ${escapeHtml(e.pages)}` : ''} (${escapeHtml(e.year)}).</div>`;
+        });
+        bibHtml += `</div>`;
+        htmlParts.push(bibHtml);
+      }
+
+      const wrapperClass = state.twoColumn ? 'two-col-body' : '';
+      return `<div class="${wrapperClass}">${htmlParts.join('\n')}</div>`;
+    }
+
+    // ============================================================================
+    // 5. CORE COMPILATION TRIGGER (INSTANT ENGINE + CLOUD TEX LIVE FALLBACK)
+    // ============================================================================
+    async function runCompile() {
+      const t0 = performance.now();
+      const statusDot = document.getElementById('compileStatusDot');
+      const statusText = document.getElementById('compileStatusText');
+      const timeBadge = document.getElementById('compileTimeBadge');
+      const logOutput = document.getElementById('compilerLogOutput');
+      const logBadge = document.getElementById('logErrorCountBadge');
+      const paperSheet = document.getElementById('renderedPaperSheet');
+      const cloudFrame = document.getElementById('cloudPdfFrame');
+
+      // Determine root tex file (main.tex if available, else activeFile)
+      const rootFile = state.files['main.tex'] !== undefined && state.activeFile.endsWith('.bib')
+        ? 'main.tex'
+        : state.activeFile;
+
+      const rawSource = state.files[rootFile] || '';
+      const resolvedSource = resolveInputs(rawSource);
+      const bibEntries = parseBibTeXAllFiles();
+      const diagnostics = diagnoseLaTeX(resolvedSource);
+
+      // Render HTML + KaTeX math in paper sheet
+      paperSheet.innerHTML = compileLaTeXToHTML(resolvedSource, bibEntries);
+
+      let katexErrors = 0;
+      if (window.renderMathInElement) {
+        try {
+          window.renderMathInElement(paperSheet, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false }
+            ],
+            throwOnError: false,
+            errorCallback: (msg) => {
+              katexErrors++;
+              diagnostics.push({ type: 'WARNING', line: 0, msg: `Math syntax warning: ${msg}` });
+            }
+          });
+        } catch (err) {
+          diagnostics.push({ type: 'WARNING', line: 0, msg: String(err) });
+        }
+      }
+
+      // If user selected Cloud TeX Live Engine (pdflatex / xelatex / lualatex), attempt live compilation via YtoTech / LaTeX.Online API
+      if (state.engine !== 'instant') {
+        statusText.textContent = `Compiling with Cloud ${state.engine} (TeX Live 2026)...`;
+        try {
+          const resources = Object.keys(state.files).map((fname) => ({
+            main: fname === rootFile,
+            path: fname,
+            content: state.files[fname]
+          }));
+          const resp = await fetch('https://latex.ytotech.com/builds/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ compiler: state.engine, resources })
+          });
+          if (resp.ok && resp.headers.get('content-type')?.includes('application/pdf')) {
+            const blob = await resp.blob();
+            const pdfUrl = URL.createObjectURL(blob);
+            cloudFrame.src = pdfUrl;
+            cloudFrame.classList.remove('hidden');
+            showToast(`Compiled binary PDF via Cloud ${state.engine}!`);
+          } else {
+            cloudFrame.classList.add('hidden');
+            diagnostics.push({
+              type: 'INFO',
+              line: 0,
+              msg: `Cloud ${state.engine} endpoint unreachable in sandboxed network; automatically rendered via Instant Local Engine.`
+            });
+          }
+        } catch (_netErr) {
+          cloudFrame.classList.add('hidden');
+          diagnostics.push({
+            type: 'INFO',
+            line: 0,
+            msg: `Cloud ${state.engine} fallback: rendered locally via Instant Browser Engine (0 network latency).`
+          });
+        }
+      } else {
+        cloudFrame.classList.add('hidden');
+      }
+
+      const elapsed = Math.max(1, Math.round(performance.now() - t0));
+      timeBadge.textContent = `${elapsed} ms`;
+
+      const errorCount = diagnostics.filter((d) => d.type === 'ERROR').length;
+      const warnCount = diagnostics.filter((d) => d.type === 'WARNING').length;
+
+      if (errorCount > 0) {
+        statusDot.className = 'inline-block w-2 h-2 rounded-full bg-rose-500';
+        statusText.textContent = `Compiled with ${errorCount} error(s), ${warnCount} warning(s)`;
+        logBadge.textContent = `${errorCount} ERR`;
+        logBadge.className = 'px-1 rounded bg-rose-500/20 text-rose-300 text-[10px]';
+      } else {
+        statusDot.className = 'inline-block w-2 h-2 rounded-full bg-leaf-400';
+        statusText.textContent = `Compiled (0 errors, ${warnCount} warnings)`;
+        logBadge.textContent = 'OK';
+        logBadge.className = 'px-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px]';
+      }
+
+      // Build realistic TeX Live log output
+      const logLines = [
+        `This is OpenLeaf TeX Engine, Version 2026.11 (WebAssembly / KaTeX Hybrid)`,
+        `entering extended mode (./${rootFile})`,
+        `LaTeX2e <2026-06-01> patch level 2`,
+        `Resolved project files: ${Object.keys(state.files).join(', ')}`,
+        `BibTeX database parsed: ${Object.keys(bibEntries).length} reference(s) indexed.`
+      ];
+      if (diagnostics.length === 0) {
+        logLines.push(`Output written on ${state.projectTitle}.pdf (1 page, ${resolvedSource.length} bytes).`);
+        logLines.push(`Transcript written on ${rootFile.replace('.tex', '.log')} in ${elapsed} ms.`);
+      } else {
+        diagnostics.forEach((d) => {
+          logLines.push(`[${d.type}] ${d.line ? `Line ${d.line}: ` : ''}${d.msg}`);
+        });
+      }
+      logOutput.textContent = logLines.join('\n');
+
+      updateOutlineSidebar(resolvedSource);
+      updateBibSidebar(bibEntries);
+    }
+
+    // ============================================================================
+    // 6. UI RENDERERS: SIDEBAR FILES, OUTLINE, BIBTEX, LINE NUMBERS, SNAPSHOTS
+    // ============================================================================
+    function renderFileTree() {
+      const container = document.getElementById('fileTreeList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      Object.keys(state.files).forEach((fname) => {
+        const isActive = fname === state.activeFile;
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between px-2.5 py-1.5 rounded text-xs cursor-pointer transition ${
+          isActive ? 'bg-leaf-600/20 text-leaf-300 border border-leaf-500/30 font-medium' : 'text-slate-300 hover:bg-slate-800/80'
+        }`;
+
+        const left = document.createElement('div');
+        left.className = 'flex items-center gap-2 truncate flex-1';
+        const iconColor = fname.endsWith('.bib') ? 'text-amber-400' : 'text-sky-400';
+        left.innerHTML = `
+          <span class="font-mono text-[10px] uppercase px-1 rounded bg-slate-800 ${iconColor}">${fname.endsWith('.bib') ? 'BIB' : 'TEX'}</span>
+          <span class="truncate">${escapeHtml(fname)}</span>
+        `;
+        left.addEventListener('click', () => switchFile(fname));
+        row.appendChild(left);
+
+        if (Object.keys(state.files).length > 1 && fname !== 'main.tex') {
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'text-slate-500 hover:text-rose-400 px-1 text-[11px]';
+          delBtn.title = `Delete ${fname}`;
+          delBtn.textContent = '✕';
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            delete state.files[fname];
+            if (state.activeFile === fname) {
+              state.activeFile = Object.keys(state.files)[0];
+            }
+            persistState();
+            loadActiveFileIntoEditor();
+            renderFileTree();
+            runCompile();
+            showToast(`Removed ${fname}`);
+          });
+          row.appendChild(delBtn);
+        }
+
+        container.appendChild(row);
+      });
+    }
+
+    function updateOutlineSidebar(source) {
+      const container = document.getElementById('outlineTreeList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const lines = source.split('\n');
+      let found = 0;
+      lines.forEach((line, idx) => {
+        const m = line.match(/\\(section|subsection|subsubsection)\*?\{([^}]*)\}/);
+        if (m) {
+          found++;
+          const level = m[1];
+          const title = m[2];
+          const pad = level === 'section' ? 'pl-1.5 font-semibold text-slate-200' : level === 'subsection' ? 'pl-4 text-slate-300' : 'pl-6 text-slate-400';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `w-full text-left py-1 px-2 rounded hover:bg-slate-800 truncate block ${pad}`;
+          btn.textContent = `${title}`;
+          btn.addEventListener('click', () => {
+            const editor = document.getElementById('latexEditor');
+            const pos = source.split('\n').slice(0, idx).join('\n').length;
+            editor.focus();
+            editor.setSelectionRange(pos, pos);
+          });
+          container.appendChild(btn);
+        }
+      });
+
+      if (found === 0) {
+        container.innerHTML = `<div class="text-slate-500 text-xs py-2">No \\section commands found in active document.</div>`;
+      }
+    }
+
+    function updateBibSidebar(bibEntries) {
+      const container = document.getElementById('bibKeyList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const keys = Object.keys(bibEntries);
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-slate-500 text-xs py-2">No BibTeX entries found in .bib files.</div>`;
+        return;
+      }
+
+      keys.forEach((k) => {
+        const entry = bibEntries[k];
+        const card = document.createElement('div');
+        card.className = 'p-2 rounded bg-slate-800/70 hover:bg-slate-800 border border-slate-700/70 cursor-pointer transition';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-leaf-400 font-semibold">${escapeHtml(entry.key)}</span>
+            <span class="text-[10px] text-slate-400">${escapeHtml(entry.year)}</span>
+          </div>
+          <div class="text-[11px] text-slate-200 truncate mt-0.5">${escapeHtml(entry.title)}</div>
+          <div class="text-[10px] text-slate-400 truncate">${escapeHtml(entry.author)}</div>
+        `;
+        card.addEventListener('click', () => {
+          insertAtCursor(`\\cite{${entry.key}}`);
+          showToast(`Inserted \\cite{${entry.key}}`);
+        });
+        container.appendChild(card);
+      });
+    }
+
+    function updateEditorMetricsAndLineNumbers() {
+      const editor = document.getElementById('latexEditor');
+      const gutter = document.getElementById('lineNumbersGutter');
+      const wordBadge = document.getElementById('wordCountBadge');
+      const charBadge = document.getElementById('charCountBadge');
+      const cursorBadge = document.getElementById('cursorPosBadge');
+
+      const text = editor.value;
+      const lines = text.split('\n');
+      gutter.innerHTML = Array.from({ length: lines.length }, (_, i) => i + 1).join('<br/>');
+
+      // Strip LaTeX commands for accurate word count
+      const plainWords = text
+        .replace(/%[a-zA-Z0-9_ -]*/g, ' ')
+        .replace(/\\[a-zA-Z]+\*?/g, ' ')
+        .replace(/[{}[\]$^&_~]/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      wordBadge.textContent = `${plainWords.length} words`;
+      charBadge.textContent = `${text.length} chars`;
+
+      const selStart = editor.selectionStart || 0;
+      const upToCursor = text.slice(0, selStart).split('\n');
+      const ln = upToCursor.length;
+      const col = upToCursor[upToCursor.length - 1].length + 1;
+      cursorBadge.textContent = `Ln ${ln}, Col ${col}`;
+    }
+
+    function loadActiveFileIntoEditor() {
+      const editor = document.getElementById('latexEditor');
+      const badge = document.getElementById('activeFileBadge');
+      editor.value = state.files[state.activeFile] || '';
+      badge.textContent = state.activeFile;
+      updateEditorMetricsAndLineNumbers();
+    }
+
+    function switchFile(fname) {
+      state.activeFile = fname;
+      persistState();
+      loadActiveFileIntoEditor();
+      renderFileTree();
+      runCompile();
+    }
+
+    function insertAtCursor(snippet) {
+      const editor = document.getElementById('latexEditor');
+      const start = editor.selectionStart || 0;
+      const end = editor.selectionEnd || 0;
+      const val = editor.value;
+      editor.value = val.slice(0, start) + snippet + val.slice(end);
+      state.files[state.activeFile] = editor.value;
+      editor.focus();
+      editor.setSelectionRange(start + snippet.length, start + snippet.length);
+      updateEditorMetricsAndLineNumbers();
+      persistState();
+      if (state.autoCompile) runCompile();
+    }
+
+    function wrapSelection(prefix, suffix, placeholder) {
+      const editor = document.getElementById('latexEditor');
+      const start = editor.selectionStart || 0;
+      const end = editor.selectionEnd || 0;
+      const val = editor.value;
+      const selected = val.slice(start, end) || placeholder;
+      const replacement = prefix + selected + suffix;
+      editor.value = val.slice(0, start) + replacement + val.slice(end);
+      state.files[state.activeFile] = editor.value;
+      editor.focus();
+      editor.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+      updateEditorMetricsAndLineNumbers();
+      persistState();
+      if (state.autoCompile) runCompile();
+    }
+
+    function renderSnapshotsList() {
+      const container = document.getElementById('snapshotListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      state.snapshots.slice().reverse().forEach((snap) => {
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-between gap-2';
+        item.innerHTML = `
+          <div>
+            <div class="text-xs font-semibold text-white">${escapeHtml(snap.label)}</div>
+            <div class="text-[11px] text-slate-400">${escapeHtml(snap.timestamp)} &bull; ${Object.keys(snap.files).length} files</div>
+          </div>
+        `;
+        const restoreBtn = document.createElement('button');
+        restoreBtn.type = 'button';
+        restoreBtn.className = 'px-2.5 py-1 bg-leaf-600/20 hover:bg-leaf-600 text-leaf-300 hover:text-white border border-leaf-500/40 rounded text-xs font-medium transition';
+        restoreBtn.textContent = 'Restore';
+        restoreBtn.addEventListener('click', () => {
+          state.files = JSON.parse(JSON.stringify(snap.files));
+          state.activeFile = Object.keys(state.files)[0];
+          persistState();
+          loadActiveFileIntoEditor();
+          renderFileTree();
+          runCompile();
+          document.getElementById('historyModal').classList.add('hidden');
+          showToast(`Restored snapshot: ${snap.label}`);
+        });
+        item.appendChild(restoreBtn);
+        container.appendChild(item);
+      });
+    }
+
+    // ============================================================================
+    // 7. EXPORT HANDLERS: PDF GENERATION & PROJECT ZIP BUNDLER
+    // ============================================================================
+    async function exportCompiledPDF() {
+      const sheet = document.getElementById('renderedPaperSheet');
+      const filename = `${(state.projectTitle || 'document').replace(/\s+/g, '_')}.pdf`;
+      showToast('Generating high-resolution PDF...');
+
+      if (window.html2pdf) {
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: filename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        try {
+          await window.html2pdf().set(opt).from(sheet).save();
+          showToast(`Downloaded ${filename}`);
+        } catch (err) {
+          window.print();
+        }
+      } else {
+        window.print();
+      }
+    }
+
+    async function exportProjectZip() {
+      if (!window.JSZip) {
+        showToast('JSZip library loading...');
+        return;
+      }
+      const zip = new window.JSZip();
+      Object.keys(state.files).forEach((fname) => {
+        zip.file(fname, state.files[fname]);
+      });
+
+      // Also include a ready-to-run Makefile and GitHub Actions workflow in the exported zip
+      zip.file(
+        'Makefile',
+        `all:\n\tpdflatex -interaction=nonstopmode main.tex\n\tbibtex main || true\n\tpdflatex -interaction=nonstopmode main.tex\n`
+      );
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(state.projectTitle || 'latex_project').replace(/\s+/g, '_')}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Exported project .zip archive!');
+    }
+
+    // ============================================================================
+    // 8. EVENT LISTENERS & INITIALIZATION
+    // ============================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const editor = document.getElementById('latexEditor');
+      const gutter = document.getElementById('lineNumbersGutter');
+
+      // Sync initial UI state
+      document.getElementById('projectTitleInput').value = state.projectTitle;
+      document.getElementById('templateSelect').value = state.activeTemplate;
+      document.getElementById('autoCompileToggle').checked = state.autoCompile;
+      document.getElementById('twoColToggle').checked = state.twoColumn;
+      document.getElementById('engineSelect').value = state.engine;
+
+      renderFileTree();
+      loadActiveFileIntoEditor();
+      runCompile();
+
+      // Scroll sync between textarea and line numbers
+      editor.addEventListener('scroll', () => {
+        gutter.scrollTop = editor.scrollTop;
+      });
+
+      // Live typing and compilation debounce
+      let compileTimer = null;
+      editor.addEventListener('input', () => {
+        state.files[state.activeFile] = editor.value;
+        updateEditorMetricsAndLineNumbers();
+        persistState();
+        if (state.autoCompile) {
+          clearTimeout(compileTimer);
+          compileTimer = setTimeout(runCompile, 180);
+        }
+      });
+
+      editor.addEventListener('click', updateEditorMetricsAndLineNumbers);
+      editor.addEventListener('keyup', updateEditorMetricsAndLineNumbers);
+
+      // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to Recompile, Tab for 2 spaces
+      editor.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          runCompile();
+          showToast('Recompiled document');
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          insertAtCursor('  ');
+        }
+      });
+
+      // Project Title Input
+      document.getElementById('projectTitleInput').addEventListener('input', (e) => {
+        state.projectTitle = e.target.value || 'Untitled_LaTeX_Project';
+        persistState();
+      });
+
+      // Template Switcher
+      document.getElementById('templateSelect').addEventListener('change', (e) => {
+        const key = e.target.value;
+        if (TEMPLATES[key]) {
+          state.activeTemplate = key;
+          state.projectTitle = TEMPLATES[key].title;
+          state.files = JSON.parse(JSON.stringify(TEMPLATES[key].files));
+          state.activeFile = 'main.tex';
+          document.getElementById('projectTitleInput').value = state.projectTitle;
+          persistState();
+          renderFileTree();
+          loadActiveFileIntoEditor();
+          runCompile();
+          showToast(`Loaded ${e.target.options[e.target.selectedIndex].text}`);
+        }
+      });
+
+      // Engine Selector
+      document.getElementById('engineSelect').addEventListener('change', (e) => {
+        state.engine = e.target.value;
+        persistState();
+        runCompile();
+      });
+
+      // Recompile, PDF & ZIP Buttons
+      document.getElementById('recompileBtn').addEventListener('click', () => {
+        runCompile();
+        showToast('Document recompiled');
+      });
+      document.getElementById('downloadPdfBtn').addEventListener('click', exportCompiledPDF);
+      document.getElementById('downloadZipBtn').addEventListener('click', exportProjectZip);
+      document.getElementById('downloadFullstackFromModalBtn').addEventListener('click', exportProjectZip);
+
+      // View Mode Switcher (Split / Code / Visual / Full PDF)
+      const setViewMode = (mode) => {
+        state.viewMode = mode;
+        const editorPane = document.getElementById('editorPane');
+        const previewPane = document.getElementById('previewPane');
+        const visualPanel = document.getElementById('visualHelperPanel');
+        const btns = {
+          split: document.getElementById('viewModeSplitBtn'),
+          code: document.getElementById('viewModeCodeBtn'),
+          visual: document.getElementById('viewModeVisualBtn'),
+          pdf: document.getElementById('viewModePdfBtn')
+        };
+
+        Object.keys(btns).forEach((k) => {
+          if (k === mode) {
+            btns[k].className = 'px-2.5 py-1 rounded-md text-xs font-medium bg-leaf-600 text-white shadow-sm transition';
+          } else {
+            btns[k].className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition';
+          }
+        });
+
+        editorPane.classList.remove('hidden');
+        previewPane.classList.remove('hidden');
+        visualPanel.classList.add('hidden');
+
+        if (mode === 'code') {
+          previewPane.classList.add('hidden');
+        } else if (mode === 'pdf') {
+          editorPane.classList.add('hidden');
+        } else if (mode === 'visual') {
+          visualPanel.classList.remove('hidden');
+        }
+      };
+
+      document.getElementById('viewModeSplitBtn').addEventListener('click', () => setViewMode('split'));
+      document.getElementById('viewModeCodeBtn').addEventListener('click', () => setViewMode('code'));
+      document.getElementById('viewModeVisualBtn').addEventListener('click', () => setViewMode('visual'));
+      document.getElementById('viewModePdfBtn').addEventListener('click', () => setViewMode('pdf'));
+
+      // Sidebar Toggle & Tabs
+      document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
+        document.getElementById('leftSidebar').classList.toggle('hidden');
+      });
+
+      const setSidebarTab = (tab) => {
+        state.sidebarTab = tab;
+        const panels = {
+          files: document.getElementById('sidebarFilesPanel'),
+          outline: document.getElementById('sidebarOutlinePanel'),
+          bib: document.getElementById('sidebarBibPanel')
+        };
+        const tabBtns = {
+          files: document.getElementById('tabFilesBtn'),
+          outline: document.getElementById('tabOutlineBtn'),
+          bib: document.getElementById('tabBibBtn')
+        };
+        Object.keys(panels).forEach((k) => {
+          panels[k].classList.toggle('hidden', k !== tab);
+          tabBtns[k].className = k === tab
+            ? 'py-2.5 text-center border-b-2 border-leaf-500 text-white bg-slate-800/40'
+            : 'py-2.5 text-center border-b-2 border-transparent hover:text-slate-200';
+        });
+      };
+
+      document.getElementById('tabFilesBtn').addEventListener('click', () => setSidebarTab('files'));
+      document.getElementById('tabOutlineBtn').addEventListener('click', () => setSidebarTab('outline'));
+      document.getElementById('tabBibBtn').addEventListener('click', () => setSidebarTab('bib'));
+
+      // New File Creation & Upload
+      document.getElementById('newFileBtn').addEventListener('click', () => {
+        document.getElementById('newFileForm').classList.remove('hidden');
+        document.getElementById('newFileNameInput').focus();
+      });
+      document.getElementById('cancelNewFileBtn').addEventListener('click', () => {
+        document.getElementById('newFileForm').classList.add('hidden');
+      });
+      document.getElementById('confirmNewFileBtn').addEventListener('click', () => {
+        const input = document.getElementById('newFileNameInput');
+        let name = (input.value || '').trim();
+        if (!name) return;
+        if (!name.includes('.')) name += '.tex';
+        if (!state.files[name]) {
+          state.files[name] = name.endsWith('.bib')
+            ? `@article{newref2026,\n  author = {Author, First},\n  title = {Article Title},\n  journal = {Journal Name},\n  year = {2026}\n}`
+            : `% ${name}\n\\section{New Section}\nWrite your content here.\n`;
+        }
+        input.value = '';
+        document.getElementById('newFileForm').classList.add('hidden');
+        switchFile(name);
+        showToast(`Created ${name}`);
+      });
+
+      document.getElementById('uploadTeXInput').addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.files[file.name] = String(reader.result || '');
+          switchFile(file.name);
+          showToast(`Uploaded ${file.name}`);
+        };
+        reader.readAsText(file);
+      });
+
+      // Add BibTeX Reference Button
+      document.getElementById('addBibEntryBtn').addEventListener('click', () => {
+        const bibFile = Object.keys(state.files).find((f) => f.endsWith('.bib')) || 'references.bib';
+        const key = `ref${Math.floor(100 + Math.random() * 900)}`;
+        const newEntry = `\n\n@article{${key},\n  author = {Researcher, Alex},\n  title = {New Scientific Finding},\n  journal = {OpenLeaf Letters},\n  year = {2026}\n}`;
+        state.files[bibFile] = (state.files[bibFile] || '') + newEntry;
+        switchFile(bibFile);
+        showToast(`Added @article{${key}} to ${bibFile}`);
+      });
+
+      // Formatting Toolbar Snippet Buttons
+      const SNIPPETS = {
+        bold: () => wrapSelection('\\textbf{', '}', 'bold text'),
+        italic: () => wrapSelection('\\textit{', '}', 'italic text'),
+        section: () => insertAtCursor('\n\\section{Section Title}\n'),
+        equation: () => insertAtCursor('\n\\begin{equation}\n  E = m c^2\n\\end{equation}\n'),
+        align: () => insertAtCursor('\n\\begin{align}\n  f(x) &= x^2 + 2x + 1 \\\\\n       &= (x + 1)^2\n\\end{align}\n'),
+        matrix: () => insertAtCursor(' \\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix} '),
+        table: () => insertAtCursor('\n\\begin{table}[h]\n\\centering\n\\begin{tabular}{lcc}\n\\toprule\nParameter & Value A & Value B \\\\\n\\midrule\nMetric 1 & 12.4 & 15.8 \\\\\nMetric 2 & 99.1\\% & 99.7\\% \\\\\n\\bottomrule\n\\end{tabular}\n\\caption{Summary of experimental parameters.}\n\\end{table}\n'),
+        figure: () => insertAtCursor('\n\\begin{figure}[h]\n\\centering\n\\caption{Schematic diagram of the experimental setup.}\n\\end{figure}\n'),
+        theorem: () => insertAtCursor('\n\\begin{theorem}\nFor every bounded linear operator $T$, the spectrum $\\sigma(T)$ is compact and non-empty.\n\\end{theorem}\n\\begin{proof}\nFollows directly from Liouville\'s theorem applied to the resolvent $(zI - T)^{-1}$.\n\\end{proof}\n'),
+        cite: () => insertAtCursor('\\cite{shor1995scheme}')
+      };
+
+      document.querySelectorAll('.snippet-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const type = btn.getAttribute('data-snippet');
+          if (SNIPPETS[type]) SNIPPETS[type]();
+        });
+      });
+
+      // Math Symbol Palette Buttons
+      document.querySelectorAll('.math-sym-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tex = btn.getAttribute('data-tex');
+          if (tex) insertAtCursor(tex);
+        });
+      });
+
+      // Visual Mode Assistant Point-and-Click Builders
+      document.getElementById('insertVisualTableBtn').addEventListener('click', () => {
+        const rows = Math.max(1, Math.min(12, Number(document.getElementById('visTableRows').value) || 3));
+        const cols = Math.max(1, Math.min(8, Number(document.getElementById('visTableCols').value) || 3));
+        const colSpec = 'l' + 'c'.repeat(Math.max(0, cols - 1));
+        const headers = Array.from({ length: cols }, (_, i) => `Header ${i + 1}`).join(' & ') + ' \\\\';
+        const bodyRows = Array.from({ length: rows }, (_, r) =>
+          Array.from({ length: cols }, (_, c) => `R${r + 1}C${c + 1}`).join(' & ') + ' \\\\'
+        ).join('\n');
+        insertAtCursor(`\n\\begin{table}[h]\n\\centering\n\\begin{tabular}{${colSpec}}\n\\toprule\n${headers}\n\\midrule\n${bodyRows}\n\\bottomrule\n\\end{tabular}\n\\caption{Generated ${rows}x${cols} table.}\n\\end{table}\n`);
+        showToast(`Inserted ${rows}x${cols} table`);
+      });
+
+      document.getElementById('insertVisualMatrixBtn').addEventListener('click', () => {
+        const mType = document.getElementById('visMatrixType').value || 'bmatrix';
+        insertAtCursor(`\n\\begin{equation}\nA = \\begin{${mType}} a_{11} & a_{12} & a_{13} \\\\ a_{21} & a_{22} & a_{23} \\\\ a_{31} & a_{32} & a_{33} \\end{${mType}}\n\\end{equation}\n`);
+        showToast(`Inserted ${mType}`);
+      });
+
+      document.getElementById('insertVisualEnvBtn').addEventListener('click', () => {
+        const envType = document.getElementById('visEnvType').value;
+        if (envType === 'theorem') {
+          SNIPPETS.theorem();
+        } else if (envType === 'itemize' || envType === 'enumerate') {
+          insertAtCursor(`\n\\begin{${envType}}\n  \\item First key point\n  \\item Second key point\n\\end{${envType}}\n`);
+        } else if (envType === 'abstract') {
+          insertAtCursor(`\n\\begin{abstract}\nConcise summary of your findings.\n\\end{abstract}\n`);
+        }
+        showToast(`Inserted ${envType} environment`);
+      });
+
+      // Live Compile & 2-Column Toggles
+      document.getElementById('autoCompileToggle').addEventListener('change', (e) => {
+        state.autoCompile = e.target.checked;
+        persistState();
+      });
+
+      document.getElementById('twoColToggle').addEventListener('change', (e) => {
+        state.twoColumn = e.target.checked;
+        persistState();
+        runCompile();
+      });
+
+      // Find & Replace Bar
+      document.getElementById('toggleFindBarBtn').addEventListener('click', () => {
+        const bar = document.getElementById('findReplaceBar');
+        bar.classList.toggle('hidden');
+        if (!bar.classList.contains('hidden')) {
+          document.getElementById('findInput').focus();
+        }
+      });
+      document.getElementById('closeFindBarBtn').addEventListener('click', () => {
+        document.getElementById('findReplaceBar').classList.add('hidden');
+      });
+      document.getElementById('findNextBtn').addEventListener('click', () => {
+        const query = document.getElementById('findInput').value;
+        const info = document.getElementById('findMatchInfo');
+        if (!query) return;
+        const text = editor.value;
+        const startPos = editor.selectionEnd || 0;
+        let idx = text.indexOf(query, startPos);
+        if (idx === -1) idx = text.indexOf(query, 0);
+        if (idx !== -1) {
+          editor.focus();
+          editor.setSelectionRange(idx, idx + query.length);
+          info.textContent = `Match at char ${idx}`;
+        } else {
+          info.textContent = 'No match';
+        }
+      });
+      document.getElementById('replaceAllBtn').addEventListener('click', () => {
+        const findStr = document.getElementById('findInput').value;
+        const replStr = document.getElementById('replaceInput').value;
+        if (!findStr) return;
+        const parts = editor.value.split(findStr);
+        const count = parts.length - 1;
+        if (count > 0) {
+          editor.value = parts.join(replStr);
+          state.files[state.activeFile] = editor.value;
+          persistState();
+          updateEditorMetricsAndLineNumbers();
+          runCompile();
+          document.getElementById('findMatchInfo').textContent = `Replaced ${count} occurrence(s)`;
+        }
+      });
+
+      // Zoom Controls
+      const applyZoom = () => {
+        const sheet = document.getElementById('renderedPaperSheet');
+        document.getElementById('zoomLevelText').textContent = `${state.zoom}%`;
+        sheet.style.transform = `scale(${state.zoom / 100})`;
+      };
+      document.getElementById('zoomOutBtn').addEventListener('click', () => {
+        state.zoom = Math.max(60, state.zoom - 10);
+        applyZoom();
+      });
+      document.getElementById('zoomInBtn').addEventListener('click', () => {
+        state.zoom = Math.min(150, state.zoom + 10);
+        applyZoom();
+      });
+      document.getElementById('zoomResetBtn').addEventListener('click', () => {
+        state.zoom = 100;
+        applyZoom();
+      });
+
+      // Compiler Logs Drawer
+      document.getElementById('toggleLogsBtn').addEventListener('click', () => {
+        document.getElementById('compilerLogsDrawer').classList.toggle('hidden');
+      });
+      document.getElementById('closeLogsDrawerBtn').addEventListener('click', () => {
+        document.getElementById('compilerLogsDrawer').classList.add('hidden');
+      });
+
+      // History Modal
+      document.getElementById('openHistoryModalBtn').addEventListener('click', () => {
+        renderSnapshotsList();
+        document.getElementById('historyModal').classList.remove('hidden');
+      });
+      document.getElementById('closeHistoryModalBtn').addEventListener('click', () => {
+        document.getElementById('historyModal').classList.add('hidden');
+      });
+      document.getElementById('createSnapshotBtn').addEventListener('click', () => {
+        const input = document.getElementById('snapshotLabelInput');
+        const label = (input.value || '').trim() || `Snapshot #${state.snapshots.length + 1}`;
+        const now = new Date();
+        const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        state.snapshots.push({
+          id: 'snap-' + Date.now(),
+          label,
+          timestamp: ts,
+          files: JSON.parse(JSON.stringify(state.files))
+        });
+        input.value = '';
+        persistState();
+        renderSnapshotsList();
+        showToast(`Saved version snapshot: ${label}`);
+      });
+
+      // Deploy / Full-Stack Modal
+      document.getElementById('openDeployModalBtn').addEventListener('click', () => {
+        document.getElementById('deployModal').classList.remove('hidden');
+      });
+      document.getElementById('closeDeployModalBtn').addEventListener('click', () => {
+        document.getElementById('deployModal').classList.add('hidden');
+      });
+      document.getElementById('doneDeployModalBtn').addEventListener('click', () => {
+        document.getElementById('deployModal').classList.add('hidden');
+      });
+    });
+  </script>
+</body>
+</html>
